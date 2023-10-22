@@ -39,26 +39,11 @@ int main()
         memcpy(&message, received_buffer.data(), sizeof(UDP_MessageHeader));
         file_db[message.id].save_from_message(message, received_buffer, bytes_in);
         message.type = UDP_MessageHeader::Type::ACK;
-        
+
         std::cout << "GET " << message.seq_number << std::endl;
 
-        if (file_db[message.id].parts.size() == message.seq_total)
-        {
-            auto crc = crc32c(0, reinterpret_cast<unsigned char *>(file_db[message.id].file_data.data()), file_db[message.id].file_data.size());
+        auto buffer_send = file_db[message.id].create_server_message(message);
 
-            char buffer_send[sizeof(message) + sizeof(crc)];
-            memcpy(&buffer_send, &message, sizeof(message));
-            memcpy(&buffer_send[sizeof(message)], &crc, sizeof(crc));
-            sendto(udp_socket_server, static_cast<void *>(&buffer_send),
-                   sizeof(buffer_send), 0,
-                   reinterpret_cast<sockaddr *>(&client_addr),
-                   sizeof(client_addr));
-            std::cout << "File received, crc=" << crc << std::endl;
-            // delete from map (posible add save to disk)
-            file_db.erase(message.id);
-        }
-        char buffer_send[sizeof(message)];
-        memcpy(&buffer_send, &message, sizeof(message));
         sendto(udp_socket_server, static_cast<void *>(&buffer_send),
                sizeof(buffer_send), 0,
                reinterpret_cast<sockaddr *>(&client_addr),

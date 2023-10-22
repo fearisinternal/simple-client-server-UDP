@@ -3,7 +3,8 @@
 int main(int argc, char *argv[])
 {
     std::cout << "Client is running" << std::endl;
-    if (argc < 2) {
+    if (argc < 2)
+    {
         std::cout << "Add path to file!" << std::endl;
     }
 
