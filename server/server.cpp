@@ -1,18 +1,6 @@
-#include <iostream>
-#include <fstream>
+#include <map>
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-
-#include <cstring>
-#include <vector>
-#include <set>
-
-#include "message_struct.h"
+#include "filedata.h"
 
 int main()
 {
@@ -33,8 +21,8 @@ int main()
         return -1;
     }
 
-    std::vector<std::byte> file_data; // todo std::byte
-    std::set<uint32_t> received_parts;
+    std::map<MessageId, FileData> file_db;
+
     while (true)
     {
         std::array<std::byte, MAX_MESSAGE_SIZE> received_buffer;
@@ -49,24 +37,14 @@ int main()
 
         UDP_MessageHeader message;
         memcpy(&message, received_buffer.data(), sizeof(UDP_MessageHeader));
-
-        received_parts.insert(message.seq_number);
-        auto start = message.seq_number * MAX_LINE_SIZE;
-        size_t message_size = bytes_in - sizeof(UDP_MessageHeader);
-        if (start + message_size > file_data.size())
-        {
-            file_data.resize(start + message_size);
-        }
-
-        memcpy(file_data.data() + start, received_buffer.data() + sizeof(UDP_MessageHeader), message_size);
-
+        file_db[message.id].save_from_message(message, received_buffer, bytes_in);
         message.type = UDP_MessageHeader::Type::ACK;
+        
+        std::cout << "GET " << message.seq_number << std::endl;
 
-        std::cout << "Part received: " << message.seq_number << std::endl;
-
-        if (received_parts.size() == message.seq_total)
+        if (file_db[message.id].parts.size() == message.seq_total)
         {
-            auto crc = crc32c(0, reinterpret_cast<unsigned char *>(file_data.data()), file_data.size());
+            auto crc = crc32c(0, reinterpret_cast<unsigned char *>(file_db[message.id].file_data.data()), file_db[message.id].file_data.size());
 
             char buffer_send[sizeof(message) + sizeof(crc)];
             memcpy(&buffer_send, &message, sizeof(message));
@@ -75,7 +53,9 @@ int main()
                    sizeof(buffer_send), 0,
                    reinterpret_cast<sockaddr *>(&client_addr),
                    sizeof(client_addr));
-            break;
+            std::cout << "File received, crc=" << crc << std::endl;
+            // delete from map (posible add save to disk)
+            file_db.erase(message.id);
         }
         char buffer_send[sizeof(message)];
         memcpy(&buffer_send, &message, sizeof(message));
