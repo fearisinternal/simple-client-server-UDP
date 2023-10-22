@@ -14,27 +14,20 @@
 
 #include "message_struct.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    std::cout << "Client was run" << std::endl;
-
-    auto udp_socket_client = socket(AF_INET, SOCK_DGRAM, 0);
-
-    if (udp_socket_client < 0)
+    std::cout << "Client is running" << std::endl;
+    if (argc < 2)
     {
-        std::cerr << "\nError socket creation..." << std::endl;
-        return 0;
+        std::cout << "Add path to file!" << std::endl;
     }
 
-    // Server information
-    sockaddr_in server_addr, client_addr;
-    socklen_t server_lenght = sizeof(server_addr);
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    auto udp_socket_client = start_socket();
+
+    auto server_addr = get_address(udp_socket_client);
 
     // todo -- file from console
-    const char *filename = "../tests/input.txt";
+    const char *filename = argv[1];
 
     std::ifstream file(filename, std::ios::binary);
     auto file_end = file.seekg(0, std::ios::end).tellg();
@@ -58,30 +51,31 @@ int main()
     while (!unsent_parts.empty())
     {
         {
-        auto part = std::begin(unsent_parts);
-        std::advance(part, rand() % unsent_parts.size());
+            auto part = std::begin(unsent_parts);
+            std::advance(part, rand() % unsent_parts.size());
+            std::cout << "Send part " << *part << std::endl;
 
-        auto first_point = *part * MAX_LINE_SIZE;
-        auto last_point = std::min((uint64_t)(first_point + MAX_LINE_SIZE), (uint64_t)file_size);
-        auto message_size = last_point - first_point;
-        std::string bytes = std::string(&file_data[first_point], &file_data[last_point]);
+            auto first_point = *part * MAX_LINE_SIZE;
+            auto last_point = std::min((uint64_t)(first_point + MAX_LINE_SIZE), (uint64_t)file_size);
+            auto message_size = last_point - first_point;
+            std::string bytes = std::string(&file_data[first_point], &file_data[last_point]);
 
-        UDP_MessageHeader message_to_send{*part, static_cast<uint32_t>(parts_count),
-                                          UDP_MessageHeader::Type::PUT, message_id};
+            UDP_MessageHeader message_to_send{*part, static_cast<uint32_t>(parts_count),
+                                              UDP_MessageHeader::Type::PUT, message_id};
 
-        unsigned char message_data[bytes.size()];
-        strcpy((char *)message_data, bytes.c_str());
+            unsigned char message_data[bytes.size()];
+            strcpy((char *)message_data, bytes.c_str());
 
-        std::array<std::byte, MAX_LINE_SIZE> send_buffer = {};
-        memcpy(send_buffer.data(), &message_to_send, sizeof(message_to_send));
-        memcpy(send_buffer.data() + sizeof(message_to_send), file_data.data() + first_point, message_size);
+            std::array<std::byte, MAX_LINE_SIZE> send_buffer = {};
+            memcpy(send_buffer.data(), &message_to_send, sizeof(message_to_send));
+            memcpy(send_buffer.data() + sizeof(message_to_send), file_data.data() + first_point, message_size);
 
-        sendto(udp_socket_client, static_cast<void *>(&send_buffer),
-               sizeof(UDP_MessageHeader) + message_size, 0,
-               reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr));
-
+            sendto(udp_socket_client, static_cast<void *>(&send_buffer),
+                   sizeof(UDP_MessageHeader) + message_size, 0,
+                   reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr));
         }
         std::array<std::byte, MAX_MESSAGE_SIZE> received_buffer;
+        socklen_t server_lenght = sizeof(server_addr);
         auto bytes_in = recvfrom(udp_socket_client, received_buffer.data(),
                                  MAX_MESSAGE_SIZE, 0,
                                  reinterpret_cast<sockaddr *>(&server_addr),
