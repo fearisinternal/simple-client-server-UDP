@@ -34,7 +34,7 @@ int main()
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // todo -- file from console
-    //  const char *filename = "../tests/input.txt";
+    const char *filename = "../tests/input.txt";
 
     std::ifstream file(filename, std::ios::binary);
     auto file_end = file.seekg(0, std::ios::end).tellg();
