@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
         std::cerr << "Add path to file!" << std::endl;
         return 0;
     }
-    std::cout << "Client is running..." << std::endl;
+    std::cout << "Client is running" << std::endl;
 
     auto udp_socket_client = start_socket();
 
@@ -19,6 +19,8 @@ int main(int argc, char *argv[])
     {
         return 0;
     }
+
+    std::cout << "Transfer file: " << filename << std::endl;
 
     uint32_t crc_get = 0;
 
@@ -33,7 +35,10 @@ int main(int argc, char *argv[])
 
         std::array<std::byte, MAX_MESSAGE_SIZE> received_buffer;
 
-        struct timeval tv {10,0}; //socket waits 10 seconds
+        struct timeval tv
+        {
+            10, 0
+        }; // socket waits 10 seconds
         setsockopt(udp_socket_client, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
 
         socklen_t server_lenght = sizeof(server_addr);

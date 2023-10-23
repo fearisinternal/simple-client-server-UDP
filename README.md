@@ -1,6 +1,10 @@
 ## Simple client-server UDP
 UDP client-server which can transfer file and calculate check value
 
+### Using:
+In 'MakeFile.sh' replace %path_to_file% with the real file path and run.
+CMake will be built, server and client will do a one-time file transfer.
+
 ### Build:
 ```
 cmake -S . -B ./build
