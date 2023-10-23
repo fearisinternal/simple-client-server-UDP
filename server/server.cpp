@@ -36,8 +36,6 @@ int main()
         message.seq_total = file_db[message.id].parts.size();
         message.type = UDP_MessageHeader::Type::ACK;
 
-        // std::cout << "Get part " << message.seq_number << std::endl;
-
         auto buffer_send = file_db[message.id].create_server_message(message);
 
         sendto(udp_socket_server, static_cast<void *>(&buffer_send),

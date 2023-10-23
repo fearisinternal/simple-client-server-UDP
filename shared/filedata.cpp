@@ -5,7 +5,7 @@ bool FileData::open_file(const char *filename)
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "File ile cannot be opened or does not exist" << std::endl;
+        std::cerr << "File cannot be opened or does not exist" << std::endl;
         return false;
     }
     auto file_end = file.seekg(0, std::ios::end).tellg();
@@ -46,7 +46,6 @@ uint64_t FileData::create_client_message(std::array<std::byte, MAX_LINE_SIZE> &s
 {
     auto part = std::begin(parts);
     std::advance(part, rand() % parts.size());
-    // std::cout << "Send part " << *part << std::endl;
 
     auto first_point = *part * MAX_LINE_SIZE;
     auto last_point = std::min((uint64_t)(first_point + MAX_LINE_SIZE), (uint64_t)file_size);
