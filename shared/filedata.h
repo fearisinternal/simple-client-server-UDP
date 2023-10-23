@@ -19,7 +19,7 @@ class FileData
 public:
     bool open_file(const char *filename);
 
-    bool save_from_message(UDP_MessageHeader message,
+    bool save_data_from_message(UDP_MessageHeader message,
                            std::array<std::byte, MAX_MESSAGE_SIZE> received_buffer,
                            ssize_t bytes_count);
 
@@ -27,11 +27,14 @@ public:
 
     uint64_t create_client_message(std::array<std::byte, MAX_LINE_SIZE> &send_buffer);
 
+private:
     MessageId id;
-    std::vector<char> file_data;
-    std::set<uint32_t> parts;
+
+public:
+    uint32_t parts_total;
     uint64_t file_size;
-    uint32_t parts_count;
+    std::set<uint32_t> parts;
+    std::vector<char> file_data;
 };
 
 #endif // FILEDATA_H

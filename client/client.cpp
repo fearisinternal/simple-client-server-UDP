@@ -2,11 +2,12 @@
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Client is running" << std::endl;
     if (argc < 2)
     {
-        std::cout << "Add path to file!" << std::endl;
+        std::cerr << "Add path to file!" << std::endl;
+        return 0;
     }
+    std::cout << "Client is running..." << std::endl;
 
     auto udp_socket_client = start_socket();
 
@@ -14,7 +15,10 @@ int main(int argc, char *argv[])
 
     const char *filename = argv[1];
     FileData filedata;
-    filedata.open_file(filename);
+    if (!filedata.open_file(filename))
+    {
+        return 0;
+    }
 
     uint32_t crc_get = 0;
 
@@ -36,15 +40,12 @@ int main(int argc, char *argv[])
                                  reinterpret_cast<sockaddr *>(&server_addr),
                                  &server_lenght);
 
-        /// TODO: check result
-
         UDP_MessageHeader get_message = {};
         memcpy(&get_message, received_buffer.data(), sizeof(UDP_MessageHeader));
-        size_t message_size = bytes_in - sizeof(UDP_MessageHeader);
 
-        if (message_size > 0)
+        if (get_message.seq_total == filedata.parts_total)
         {
-            memcpy(&crc_get, received_buffer.data() + sizeof(UDP_MessageHeader), message_size);
+            memcpy(&crc_get, received_buffer.data() + sizeof(UDP_MessageHeader), bytes_in - sizeof(UDP_MessageHeader));
         }
 
         filedata.parts.erase(get_message.seq_number);
@@ -53,6 +54,14 @@ int main(int argc, char *argv[])
     uint32_t crc = crc32c(0, reinterpret_cast<unsigned char *>(filedata.file_data.data()), filedata.file_size);
     std::cout << "crc_client: " << crc << std::endl;
     std::cout << "crc_server: " << crc_get << std::endl;
+    if (crc == crc_get)
+    {
+        std::cout << "Task was completed successfully!" << std::endl;
+    }
+    else
+    {
+        std::cerr << "CRC did not match, sending error!" << std::endl;
+    }
 
     return 0;
 }

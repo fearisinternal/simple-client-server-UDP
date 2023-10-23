@@ -5,22 +5,19 @@
 int main()
 {
     std::cout << "Server is running" << std::endl;
-
     auto udp_socket_server = start_socket();
-
     if (udp_socket_server < 0)
     {
         return 0;
     }
-
     auto server_addr = get_address(udp_socket_server);
-
     if (bind(udp_socket_server, (sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
         std::cerr << "Binding was failed..." << std::endl;
-        return -1;
+        return 0;
     }
-
+    
+    //File Database
     std::map<MessageId, FileData> file_db;
 
     while (true)
@@ -33,14 +30,13 @@ int main()
                                  reinterpret_cast<sockaddr *>(&client_addr),
                                  &client_length);
 
-        // todo check correct received message -- test & -1
-
         UDP_MessageHeader message;
         memcpy(&message, received_buffer.data(), sizeof(UDP_MessageHeader));
-        file_db[message.id].save_from_message(message, received_buffer, bytes_in);
+        file_db[message.id].save_data_from_message(message, received_buffer, bytes_in);
+        message.seq_total = file_db[message.id].parts.size();
         message.type = UDP_MessageHeader::Type::ACK;
 
-        std::cout << "GET " << message.seq_number << std::endl;
+        // std::cout << "Get part " << message.seq_number << std::endl;
 
         auto buffer_send = file_db[message.id].create_server_message(message);
 
@@ -51,6 +47,6 @@ int main()
     }
 
     close(udp_socket_server);
-
+    
     return 0;
 }
