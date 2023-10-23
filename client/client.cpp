@@ -24,22 +24,27 @@ int main(int argc, char *argv[])
 
     while (!filedata.parts.empty())
     {
-        {
-            std::array<std::byte, MAX_LINE_SIZE> send_buffer;
-            auto message_size = filedata.create_client_message(send_buffer);
+        std::array<std::byte, MAX_LINE_SIZE> send_buffer;
+        auto message_size = filedata.create_client_message(send_buffer);
 
-            sendto(udp_socket_client, static_cast<void *>(&send_buffer),
-                   sizeof(UDP_MessageHeader) + message_size, 0,
-                   reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr));
-        }
+        sendto(udp_socket_client, static_cast<void *>(&send_buffer),
+               sizeof(UDP_MessageHeader) + message_size, 0,
+               reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr));
+
         std::array<std::byte, MAX_MESSAGE_SIZE> received_buffer;
+
+        struct timeval tv {10,0}; //socket waits 10 seconds
+        setsockopt(udp_socket_client, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
 
         socklen_t server_lenght = sizeof(server_addr);
         auto bytes_in = recvfrom(udp_socket_client, received_buffer.data(),
                                  MAX_MESSAGE_SIZE, 0,
                                  reinterpret_cast<sockaddr *>(&server_addr),
                                  &server_lenght);
-
+        if (bytes_in < 0)
+        {
+            continue;
+        }
         UDP_MessageHeader get_message = {};
         memcpy(&get_message, received_buffer.data(), sizeof(UDP_MessageHeader));
 

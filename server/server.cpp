@@ -16,8 +16,8 @@ int main()
         std::cerr << "Binding was failed..." << std::endl;
         return 0;
     }
-    
-    //File Database
+
+    // File Database
     std::map<MessageId, FileData> file_db;
 
     while (true)
@@ -33,11 +33,8 @@ int main()
         UDP_MessageHeader message;
         memcpy(&message, received_buffer.data(), sizeof(UDP_MessageHeader));
         file_db[message.id].save_data_from_message(message, received_buffer, bytes_in);
-        message.seq_total = file_db[message.id].parts.size();
-        message.type = UDP_MessageHeader::Type::ACK;
-
+        
         auto buffer_send = file_db[message.id].create_server_message(message);
-
         sendto(udp_socket_server, static_cast<void *>(&buffer_send),
                sizeof(buffer_send), 0,
                reinterpret_cast<sockaddr *>(&client_addr),
@@ -45,6 +42,6 @@ int main()
     }
 
     close(udp_socket_server);
-    
+
     return 0;
 }

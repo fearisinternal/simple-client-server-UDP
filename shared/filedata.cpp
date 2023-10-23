@@ -26,9 +26,9 @@ bool FileData::open_file(const char *filename)
     return true;
 }
 
-bool FileData::save_data_from_message(UDP_MessageHeader message,
-                                 std::array<std::byte, MAX_MESSAGE_SIZE> received_buffer,
-                                 ssize_t bytes_count)
+bool FileData::save_data_from_message(const UDP_MessageHeader &message,
+                                      const std::array<std::byte, MAX_MESSAGE_SIZE> &received_buffer,
+                                      const ssize_t &bytes_count)
 {
     parts.insert(message.seq_number);
     parts_total = message.seq_total;
@@ -60,18 +60,21 @@ uint64_t FileData::create_client_message(std::array<std::byte, MAX_LINE_SIZE> &s
     strcpy((char *)message_data, bytes.c_str());
     memcpy(send_buffer.data(), &message_to_send, sizeof(message_to_send));
     memcpy(send_buffer.data() + sizeof(message_to_send), file_data.data() + first_point, message_size);
+
     return message_size;
 }
 
-std::array<std::byte, BUFFER_ANSWER_SIZE> FileData::create_server_message(UDP_MessageHeader message)
+std::array<std::byte, BUFFER_ANSWER_SIZE> FileData::create_server_message(UDP_MessageHeader &message)
 {
+    message.seq_total = parts.size();
+    message.type = UDP_MessageHeader::Type::ACK;
     if (parts.size() == parts_total)
     {
         auto crc = crc32c(0, reinterpret_cast<unsigned char *>(file_data.data()), file_data.size());
         std::array<std::byte, BUFFER_ANSWER_SIZE> buffer_send;
         memcpy(&buffer_send, &message, sizeof(message));
         memcpy(&buffer_send[sizeof(message)], &crc, sizeof(crc));
-        std::cout << "File received, crc = " << crc << std::endl;
+        std::cout << "The entire file is received, crc = " << crc << std::endl;
         return buffer_send;
     }
     std::array<std::byte, BUFFER_ANSWER_SIZE> buffer_send;
