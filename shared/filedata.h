@@ -1,6 +1,4 @@
 #pragma once
-#ifndef FILEDATA_H
-#define FILEDATA_H
 
 #include "message_struct.h"
 
@@ -22,13 +20,13 @@ public:
     bool save_data_from_message(const UDP_MessageHeader &message,
                                 const std::array<std::byte, MAX_MESSAGE_SIZE> &received_buffer,
                                 const ssize_t &bytes_count);
-    
+
     /// @brief Create server message
     /// return - buffer message
     std::array<std::byte, BUFFER_ANSWER_SIZE> create_server_message(UDP_MessageHeader &message);
-    
+
     /// @brief Create client message
-    /// return - size of buffer message 
+    /// return - size of buffer message
     uint64_t create_client_message(std::array<std::byte, MAX_LINE_SIZE> &send_buffer);
 
 private:
@@ -40,5 +38,3 @@ public:
     std::set<uint32_t> parts;
     std::vector<char> file_data;
 };
-
-#endif // FILEDATA_H

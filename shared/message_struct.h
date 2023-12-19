@@ -1,6 +1,4 @@
 #pragma once
-#ifndef MESSAGE_STRUCT_H
-#define MESSAGE_STRUCT_H
 
 #include <cstddef>
 #include <cstdint>
@@ -45,7 +43,5 @@ extern uint32_t crc32c(uint32_t crc, const unsigned char *buf, size_t len);
 /// @brief Create Internet socket address
 extern sockaddr_in get_address(int udp_socket);
 
-/// @brief Create a new socket 
+/// @brief Create a new socket
 extern int start_socket();
-
-#endif /* MESSAGE_STRUCT_H */

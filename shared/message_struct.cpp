@@ -1,4 +1,5 @@
 #include "message_struct.h"
+#include "logger.h"
 
 uint32_t crc32c(uint32_t crc, const unsigned char *buf, size_t len)
 {
@@ -24,11 +25,12 @@ sockaddr_in get_address(int udp_socket)
 int start_socket()
 {
     auto udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-
     if (udp_socket < 0)
     {
-        std::cerr << "\nError socket creation..." << std::endl;
+
+        Logger::Error("Error socket creation");
         return -1;
     }
+    Logger::Info("Create socket");
     return udp_socket;
 }
